@@ -3,13 +3,7 @@
 Raw sequence data requires pre-processing to be used in genotyping pipelines. Here is an overview of an older version of the GATK "best practices", which we will be using parts of. 
 ![image](https://github.com/TonyKess/genotyping_hpc/assets/33424749/45bbf013-1eaa-4bea-8d8e-1681c8f4db4a)
 
-You would think someone would have dealt with this issue in a single consolidated software package, and that is [kind of true](https://nf-co.re/sarek). But projects in "non-model" species (e.g. everything) often have lots of small analysis decisions that require working closely with the data, so we are going to run these steps ourselves! Working with pre-configured pipelines also often requires prior knowledge of what the tools are actually doing, and what their inputs/outputs and errors look like. The scripts for running these on a SLURM cluster are listed [here](https://github.com/TonyKess/genotyping_hpc/tree/main/scripts). 
-
-Eventually we can combine these into a single workflow for reproducibility and solve the problem of genotyping permanently and everyone can move on to working on other problems rather than building wrappers around their own preferred toolset for genotyping data used in their research. [ha](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7111497/) [ha](https://academic.oup.com/bioinformatics/article/34/1/107/4096362) [just](https://github.com/snakemake-workflows/dna-seq-gatk-variant-calling) [kidding](https://www.nature.com/articles/nmeth.3505). 
-
-It's still worth packaging tools as a workflow where possible, and these are great resources that have been developed, but often each project has different suites of tools that need to be tested and run.
-
-This section provides links for running tools we have used for genotyping fisheries species, with an emphasis on handling low and medium coverage data through working with genotype likelihoods and imputation. We run these tools in [SLURM](https://slurm.schedmd.com/documentation.html) and a bit of background on why we run them in a specific order.
+This section provides links for running tools we have used for genotyping fisheries species, with an emphasis on handling low and medium coverage data through working with genotype likelihoods and imputation. We run these tools in [SLURM](https://slurm.schedmd.com/documentation.html).
 
 ## Directory setup
 
@@ -137,15 +131,16 @@ For realignment around insertsions/deletions, we will first need to index the de
 
 ```
 for i in {00..<n set files>} ;    do sbatch --export=ALL,set=<project name>.set$i,paramfile=WGSparams_<project name>.tsv 06_samtools_indexdedup_parallel.sh ;  done
-
+```
 Now we can get to actually realigning! Worth nothing this step is from a deprecated version of GATK, but because we are going to do our SNP calling and analysis of genotype likelihoods in ANGSD, we still need to realign. This can be done in a couple of steps, first identifying realignment targets:
 
 ```
 for i in {00..<n set files>} ;    do sbatch --export=ALL,set=<project name>.set$i,paramfile==WGSparams_<project name> 07_indel_target_parallel.sh ;  done
 ```
-And then updating those alignments:  
+And then updating those alignments:
+ 
 ```
 for i in for i in {00..<n set files>} ;    do sbatch --export=ALL,set=<project name>.set$i,paramfile=WGSparams_<project name> 08_indel_realign_parallel.sh ;  done
 ```
 
-This should cover all of the pre-processing steps, and we are ready to move on to the [confusing realm](https://github.com/ANGSD/angsd/issues) of ectracting genotype likelihoods from ANGSD.
+This should cover all of the pre-processing steps, and we are ready to move to producing genotype and likelihoods from ANGSD.
