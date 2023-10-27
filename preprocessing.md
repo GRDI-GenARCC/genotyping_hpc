@@ -119,7 +119,7 @@ Then, just like other tasks, we can launch the jobs for all samples simulatenous
 
 ```
 for i in {00..<n set files>} ;    do sbatch --export=ALL,set=<project name>.set$i,paramfile=WGSparams_<project name>.tsv 04_gatkmarkdup.sh ;  done
-
+```
 
 At the same time, we are going to need a sequence dictionary for indel realignemt. So we can also produce that now, just once per reference genome.
  
