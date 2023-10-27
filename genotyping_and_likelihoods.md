@@ -27,10 +27,10 @@ cut -f1 <your reference genome.fasta.fai> > chroms
 ## Job submission
 
 ```
-while read chrom;  do sbatch --export=ALL,chrom=$chrom,paramfile=WGSparams_aeip.tsv,angsdparam=refs_angsdparam.tsv  09_angsd_bcf_beag_maf.sh ;  
-  done < Ssal_v3.1_genomic.chroms
+while read chrom;  do sbatch --export=ALL,chrom=$chrom,paramfile=WGSparams_<project name>.tsv,angsdparam=angsdparam.<project name>.tsv  09_angsd_bcf_beag_maf.sh ;  
+  done < chroms
 ```
-We are doing this first for a set of individuals sequenced at high coverage. The ANGSD command looks like this:
+In cases where imputation is planned, or number of sequenced samples is high, we can do this first for a " set of individuals representative of range-wide genetic variation. The ANGSD command looks like this:
 
 ```
 cd projdir/angsd_in
@@ -69,11 +69,11 @@ zcat *mafs.gz  | sort | uniq | cut -f1,2,3,4 | sed '$d' > All_sites.tsv
 Which will open up all the allele frequency estimates from each chromosome, sort them and remove duplicate headers, and then drop the header that gets sorted to the bottom of the file.  Then we index these sites using ANGSD:
 
 ```
-conda activate align
+mamba activate align
 angsd sites index All_sites.tsv
-conda deactivate 
+mamba deactivate 
 ```
-We can add this information to the parameter file for our lcWGS samples:
+We can add this information to the parameter file for other lcWGS samples:
 
 ```
 sites=All_sites.tsv
@@ -91,5 +91,17 @@ Now we have a bunch of kinda useless bcf files. They're smaller than vcfs but th
 while read chrom;  do sbatch --export=ALL,chrom=$chrom,paramfile=WGSparams_<project name>,angsdparam=<project_name>_angsdparam.tsv  11_bcf_to_vcf.sh ;  
   done < chroms
 ```
+
+Another caveat here is that you may have a highly fragmented genome, or large chromosomes that require fragmentation and re-assembly post genotype/likelihood estimation. In this case, you can switch your -r flag to -rf, which is a list of regions. In this case, we have stored each of our 1000 contig region lists in the angsd_in directory. To make the initial contig list, we do
+
+```
+while read x; do echo $x: ;done < chroms_contigs.tsv > chrom_contigs_rf.tsv
+```
+Which appends a ":" to the end of the contig name so that the -rf flag can read it properly. Then we split the list into sublists of 1000 contigs each:
+
+```
+split -l 1000 -d chrom_contigs_rf.tsv  angsd_in/chrom_contigs_rf.set
+```
+And instead of submitting the list of chromosomes to sbatch, we instead submit the list of lists.
 
 And we're done! ANGSD has handled much of the filtering and format conversion here for us, so we can now do different population genomic analyses. 
