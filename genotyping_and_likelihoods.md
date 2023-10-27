@@ -60,7 +60,10 @@ $angsd \
   -remove_bads 1 \ #remove reads with failed map/pairing paramterts
   -only_proper_pairs 1 #only keep reads with proper pairing
  ```
-Most of it won't change, but we can use sites genotyped at high coverage for imputation or to maintain allele calls across samples. To get these sites after the first genotyping run, we do the following:
+## Genotyping output
+
+We've now generated a number of different files at the chromosome level. The important ones are the .bcf, .mafs, and .beagle files.  The bcfs we will use for working directly with genotypes. The .beagle files will be used for genotype likelihood analysis in PCANGSD, and the .mafs can be used for getting site info, or 
+We can use sites genotyped at high coverage for imputation or to maintain allele calls across samples. To get these sites after the first genotyping run, we do the following:
 
 ```
 zcat *mafs.gz  | sort | uniq | cut -f1,2,3,4 | sed '$d' > All_sites.tsv
